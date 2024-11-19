@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YouTube Music Downloader</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <h1>YouTube Music Downloader</h1>
+
+        <!-- Form for entering YouTube URL -->
+        <form id="downloadForm">
+            <input type="url" id="youtube_url" name="youtube_url" placeholder="Enter YouTube URL" required>
+            <button type="submit">Download MP3</button>
+        </form>
+
+        <!-- Loading Spinner -->
+        <div id="loading" style="display: none;">
+            <p>Downloading...</p>
+            <img src="https://i.gifer.com/ZZ5H.gif" alt="Loading" />
+        </div>
+
+        <!-- Song Details and Download Link -->
+        <div id="downloadLink" style="display: none;">
+            <p>Your download is ready:</p>
+            <img id="songThumbnail" src="" alt="Song Poster" style="max-width: 300px; height: auto; margin-bottom: 1rem;" />
+            <ul>
+                <li><strong>Title:</strong> <span id="songTitle"></span></li>
+                <li><strong>Duration:</strong> <span id="songDuration"></span></li>
+                <li><strong>Uploader:</strong> <span id="songUploader"></span></li>
+            </ul>
+            <a href="#" id="fileLink" download>Click here to download the MP3</a>
+            <button id="downloadMoreBtn">Download More Songs</button>
+        </div>
+    </div>
+
+    <script>
+        $(document).ready(function () {
+            // Handle form submission
+            $('#downloadForm').on('submit', function (e) {
+                e.preventDefault(); // Prevent page reload
+                
+                const url = $('#youtube_url').val(); // Get the entered URL
+                if (!url) return;
+
+                // Show loading spinner and hide form/download section
+                toggleView('loading');
+
+                // Send AJAX POST request to the server
+                $.ajax({
+                    url: '/download',
+                    type: 'POST',
+                    data: { youtube_url: url },
+                    success: function (response) {
+                        if (response.error) {
+                            alert(`Error: ${response.error}`);
+                            toggleView('form');
+                            return;
+                        }
+
+                        // Update download link, song details, and thumbnail
+                        $('#fileLink').attr('href', `/download-file/${response.file_name}`);
+                        $('#songTitle').text(response.song_name);
+                        $('#songDuration').text(response.duration);
+                        $('#songUploader').text(response.uploader);
+                        $('#songThumbnail').attr('src', response.thumbnail); // Set the thumbnail
+
+                        // Show download section
+                        toggleView('downloadLink');
+                    },
+                    error: function () {
+                        // Show error message on failure
+                        alert('Error downloading the file. Please try again.');
+                        toggleView('form'); // Reset to form view
+                    }
+                });
+            });
+
+            // Handle "Download More Songs" button click
+            $('#downloadMoreBtn').on('click', function () {
+                // Reset form and toggle views
+                $('#youtube_url').val('');
+                toggleView('form');
+            });
+
+            // Function to toggle visibility of sections
+            function toggleView(view) {
+                // Hide all sections initially
+                $('#downloadForm').hide();
+                $('#loading').hide();
+                $('#downloadLink').hide();
+
+                // Show the appropriate section
+                if (view === 'form') $('#downloadForm').show();
+                if (view === 'loading') $('#loading').show();
+                if (view === 'downloadLink') $('#downloadLink').show();
+            }
+        });
+    </script>
+</body>
+</html>
