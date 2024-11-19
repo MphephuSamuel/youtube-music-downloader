@@ -62,4 +62,5 @@ def download_file(file_name):
     return "File not found", 404
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    port = int(os.environ.get("PORT", 5000))  # Use the port Render gives, default to 5000
+    app.run(host="0.0.0.0", port=port, debug=True)
